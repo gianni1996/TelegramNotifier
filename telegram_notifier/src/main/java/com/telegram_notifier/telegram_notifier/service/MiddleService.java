@@ -1,14 +1,16 @@
 package com.telegram_notifier.telegram_notifier.service;
 
+import java.io.File;
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import com.telegram_notifier.telegram_notifier.config.TelegramConfig;
 import com.telegram_notifier.telegram_notifier.config.TrelloConfig;
 import com.telegram_notifier.telegram_notifier.model.TrelloCard;
 import com.telegram_notifier.telegram_notifier.model.TrelloList;
+import com.telegram_notifier.telegram_notifier.util.DiagramGenerator;
+import org.jfree.data.general.DefaultPieDataset; 
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,7 +28,6 @@ public class MiddleService {
     private TelegramService telegramService;
 
     public void downloadLists() {
-
         List<TrelloList> lists = trelloService.getLists(trelloConfig.getBoardId());
         StringBuilder messageBuilder = new StringBuilder();
 
@@ -35,27 +36,41 @@ public class MiddleService {
             return;
         }
 
+        DefaultPieDataset dataset = new DefaultPieDataset();
         log.info("Starting Lists Download. ");
 
         for (TrelloList list : lists) {
             List<TrelloCard> cards = trelloService.getCardsInList(list.getId());
             log.info("cards in list {}: {}", list.getName(), cards);
-            messageBuilder.append("List Name: ").append(list.getName()).append("\n");
 
-            if (isListWithoutCards(cards)) {
-                // Se non ci sono carte, non aggiungere nulla
-                messageBuilder.append("    Nessuna attività presente. \n");
-                continue;
-            }
+            appendCardsToMessageBuilder(cards, messageBuilder, list.getName());
 
-            for (TrelloCard card : cards) {
-                messageBuilder.append("    - ").append(card.getName()).append("\n");
-            }
+            int cardCount = cards.size();
+            dataset.setValue(list.getName(), cardCount);
         }
 
+        sendChartToTelegram(dataset);
         telegramService.sendMessage(telegramConfig.getChatid(), messageBuilder.toString());
-
         log.info("End of Lists Download. ");
+    }
+
+    private void sendChartToTelegram(DefaultPieDataset dataset) {
+        File chartFile = DiagramGenerator.generateChart(dataset);
+        InputFile inputFile = new InputFile(chartFile);
+
+        if (chartFile != null) {
+            telegramService.sendPhoto(telegramConfig.getChatid(), inputFile);
+        }    
+    }
+
+    private void appendCardsToMessageBuilder(List<TrelloCard> cards, StringBuilder messageBuilder, String listName) {
+        messageBuilder.append("*").append(listName).append("*:\n"); // Nome della lista in grassetto
+        for (TrelloCard card : cards) {
+            messageBuilder.append("    • ").append(card.getName()).append("\n"); // Utilizza un punto elenco
+            if (card.getDesc() != null && !card.getDesc().isEmpty()) {
+                messageBuilder.append("      → ").append(card.getDesc()).append("\n"); // Indentazione per la descrizione
+            }
+        }
     }
 
     private boolean isListWithoutCards(List<TrelloCard> cards) {
@@ -65,5 +80,4 @@ public class MiddleService {
     private boolean isListWithoutLists(List<TrelloList> lists) {
         return lists == null || lists.isEmpty() || lists.stream().allMatch(list -> list.getId().isBlank());
     }
-
 }

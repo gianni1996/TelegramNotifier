@@ -34,7 +34,7 @@ public class TrelloService {
         try {
             lists = trelloRepository.getListsFromBoard(boardId);
         } catch (Exception e) {
-            log.error("Errore nel recupero delle liste", e);
+            log.error("Errore nel recupero delle liste. ", e);
         }
         return lists == null ? null : mapListsToModel(lists);
     }
@@ -48,7 +48,7 @@ public class TrelloService {
         try {
             cards = trelloRepository.getCardsFromList(listId);
         } catch (Exception e) {
-            log.error("Errore nel recupero delle card", e);
+            log.error("Errore nel recupero delle card. ", e);
         }
         return cards == null ? null : mapCardsToModel(cards);
     }
