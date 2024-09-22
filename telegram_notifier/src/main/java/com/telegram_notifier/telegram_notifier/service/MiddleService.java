@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.telegram_notifier.telegram_notifier.config.TelegramConfig;
 import com.telegram_notifier.telegram_notifier.config.TrelloConfig;
 import com.telegram_notifier.telegram_notifier.model.TrelloCard;
 import com.telegram_notifier.telegram_notifier.model.TrelloList;
@@ -19,6 +20,8 @@ public class MiddleService {
     private TrelloService trelloService;
     @Autowired
     private TrelloConfig trelloConfig;
+    @Autowired
+    private TelegramConfig telegramConfig;
     @Autowired
     private TelegramService telegramService;
 
@@ -50,7 +53,7 @@ public class MiddleService {
             }
         }
 
-        telegramService.sendMessage("395339922", messageBuilder.toString());
+        telegramService.sendMessage(telegramConfig.getChatid(), messageBuilder.toString());
 
         log.info("End of Lists Download. ");
     }
