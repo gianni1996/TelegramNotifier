@@ -12,7 +12,9 @@ import org.jfree.chart.plot.PiePlot3D;
 import org.jfree.data.general.DefaultPieDataset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,9 +30,9 @@ public class DiagramGenerator {
             JFreeChart chart = ChartFactory.createPieChart3D(
                     "Overview - " + timestamp,
                     dataset,
-                    true,  // include legenda
-                    true,  // suggerimenti
-                    false  // URL
+                    true, // include legenda
+                    true, // suggerimenti
+                    false // URL
             );
 
             // Imposta PiePlot3D
@@ -39,10 +41,12 @@ public class DiagramGenerator {
             plot.setShadowYOffset(3);
             plot.setForegroundAlpha(0.8f);
 
-            // Imposta colori delle sezioni
-            plot.setSectionPaint("Sezione 1", Color.RED);
-            plot.setSectionPaint("Sezione 2", Color.YELLOW);
-            plot.setSectionPaint("Sezione 3", Color.GREEN);
+            // Genera colori casuali unici per le sezioni
+            Set<Color> usedColors = new HashSet<>();
+            for (Object key : dataset.getKeys()) {
+                Color randomColor = generateUniqueRandomColor(usedColors);
+                plot.setSectionPaint((Comparable) key, randomColor); // Cast key to Comparable
+            }
 
             // Aggiungi etichette con percentuali
             PieSectionLabelGenerator generator = new StandardPieSectionLabelGenerator("{0}: {1} ({2})");
@@ -64,4 +68,16 @@ public class DiagramGenerator {
             return null; // Return null in caso di errore
         }
     }
+
+    // Metodo per generare un colore casuale unico
+    private static Color generateUniqueRandomColor(Set<Color> usedColors) {
+        Color color;
+        do {
+            // Genera un colore casuale
+            color = new Color((int) (Math.random() * 0x1000000)); // Genera un colore casuale esadecimale
+        } while (usedColors.contains(color)); // Ripeti finché il colore è già usato
+        usedColors.add(color); // Aggiungi il colore utilizzato al set
+        return color;
+    }
+
 }

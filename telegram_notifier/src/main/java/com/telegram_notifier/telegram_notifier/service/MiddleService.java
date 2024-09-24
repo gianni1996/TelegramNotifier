@@ -65,6 +65,12 @@ public class MiddleService {
 
     private void appendCardsToMessageBuilder(List<TrelloCard> cards, StringBuilder messageBuilder, String listName) {
         messageBuilder.append("*").append(listName).append("*:\n"); // Nome della lista in grassetto
+        
+        if(isListWithoutCards(cards)){
+            messageBuilder.append("      Nessuna card presente. ").append("\n");
+            return;
+        };
+
         for (TrelloCard card : cards) {
             messageBuilder.append("    • ").append(card.getName()).append("\n"); // Utilizza un punto elenco
             if (card.getDesc() != null && !card.getDesc().isEmpty()) {
