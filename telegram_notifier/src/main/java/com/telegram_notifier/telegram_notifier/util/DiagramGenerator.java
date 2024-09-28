@@ -30,9 +30,9 @@ public class DiagramGenerator {
             JFreeChart chart = ChartFactory.createPieChart3D(
                     "Overview - " + timestamp,
                     dataset,
-                    true, // include legenda
-                    true, // suggerimenti
-                    false // URL
+                    true, 
+                    true, 
+                    false 
             );
 
             // Imposta PiePlot3D
