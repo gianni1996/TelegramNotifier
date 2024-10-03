@@ -2,10 +2,8 @@ package com.trello_talk.trello_talk.service;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.trello_talk.trello_talk.config.error.ApiException;
 import com.trello_talk.trello_talk.dto.input.TrelloCardInputDTO;
 import com.trello_talk.trello_talk.dto.input.TrelloListInputDTO;
@@ -15,7 +13,6 @@ import com.trello_talk.trello_talk.dto.output.TrelloListWithCardsDTO;
 import com.trello_talk.trello_talk.mapper.TrelloCardMapper;
 import com.trello_talk.trello_talk.mapper.TrelloListMapper;
 import com.trello_talk.trello_talk.repository.TrelloRepository;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Service
