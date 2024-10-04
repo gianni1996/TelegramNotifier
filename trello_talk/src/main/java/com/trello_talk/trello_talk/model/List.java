@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrelloList {
+public class List {
     private String id;             // ID della lista
     private String name;           // Nome della lista
     private boolean closed;        // Se la lista è chiusa

@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrelloCard {
+public class Card {
     private String id;             // ID della card
     private String name;           // Nome della card
     private String desc;           // Descrizione della card

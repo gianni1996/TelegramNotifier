@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrelloListInputDTO {
+public class ListInputDTO {
     private String id;             
     private String name;           
     private boolean closed;        
