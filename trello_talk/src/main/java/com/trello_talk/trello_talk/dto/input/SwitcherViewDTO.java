@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardAttachmentsDTO {
-    private BoardPerBoardDTO perBoard;
-    private BoardPerCardDTO perCard;
+public class SwitcherViewDTO{
+    public String viewType;
+    public boolean enabled;
 }

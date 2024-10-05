@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardSwitcherViewDTO {
-    private String viewType;
-    private Boolean enabled; 
+public class CheckItemsDTO{
+    public PerChecklistDTO perChecklist;
 }

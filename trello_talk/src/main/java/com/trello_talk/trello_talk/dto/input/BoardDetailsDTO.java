@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardChecklistsDTO {
-    private BoardChecklistLimitsDTO perBoard;
-    private BoardChecklistLimitsDTO perCard; 
+public class BoardDetailsDTO{
+    public TotalMembersPerBoardDTO totalMembersPerBoard;
+    public TotalAccessRequestsPerBoardDTO totalAccessRequestsPerBoard;
 }

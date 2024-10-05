@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardStickersDTO {
-    private BoardStickerLimitsDTO perCard;
+public class ListsDTO{
+    public OpenPerBoardDTO openPerBoard;
+    public TotalPerBoardDTO totalPerBoard;
 }

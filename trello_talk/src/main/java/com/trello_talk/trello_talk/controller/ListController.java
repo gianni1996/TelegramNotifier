@@ -10,35 +10,18 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.trello_talk.trello_talk.config.error.ApiException;
-import com.trello_talk.trello_talk.dto.output.BoardOutputDTO;
-import com.trello_talk.trello_talk.dto.output.CardOutputDTO;
 import com.trello_talk.trello_talk.dto.output.ListOutputDTO;
 import com.trello_talk.trello_talk.dto.output.ListWithCardsDTO;
-import com.trello_talk.trello_talk.service.TrelloService;
+import com.trello_talk.trello_talk.service.ListService;
 
 import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @Slf4j
-public class TrelloController {
+public class ListController {
 
     @Autowired
-    private TrelloService trelloService;
-
-    @GetMapping("/boards")
-    public ResponseEntity<List<BoardOutputDTO>> getAllBoards(
-            @RequestHeader("Token") String token,
-            @RequestHeader("ApiKey") String apiKey) {
-
-        List<BoardOutputDTO> boards = trelloService.getAllBoards(token, apiKey);
-
-        if (boards == null || boards.isEmpty()) {
-            log.error("Nessun board trovato.");
-            throw new ApiException("No boards found for the user.");
-        }
-
-        return ResponseEntity.ok(boards);
-    }
+    private ListService trelloService;
 
     @GetMapping("/board/{boardId}/lists")
     public ResponseEntity<List<ListOutputDTO>> getListsByBoardId(
@@ -54,22 +37,6 @@ public class TrelloController {
         }
 
         return ResponseEntity.ok(lists);
-    }
-
-    @GetMapping("/board/{listId}/cards")
-    public ResponseEntity<List<CardOutputDTO>> getCardsByListId(
-            @PathVariable String listId,
-            @RequestHeader("Token") String token,
-            @RequestHeader("ApiKey") String apiKey) {
-
-        List<CardOutputDTO> cards = trelloService.getCards(listId, token, apiKey);
-
-        if (cards == null || cards.isEmpty()) {
-            log.error("Nessuna card trovata per la listId: " + listId);
-            throw new ApiException("No cards found for list ID: " + listId);
-        }
-
-        return ResponseEntity.ok(cards);
     }
 
     @GetMapping("/board/{boardId}/listswithcards")

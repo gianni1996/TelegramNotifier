@@ -7,7 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardListsDTO {
-    private BoardListLimitsDTO openPerBoard;
-    private BoardListLimitsDTO totalPerBoard;
+public class PerFieldDTO{
+    public String status;
+    public int disableAt;
+    public int warnAt;
 }

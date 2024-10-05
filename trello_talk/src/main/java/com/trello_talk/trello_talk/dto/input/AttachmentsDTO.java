@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardCardLimitsDTO {
-    private String status; 
-    private int disableAt;
-    private int warnAt;
+public class AttachmentsDTO{
+    public PerBoardDTO perBoard;
+    public PerCardDTO perCard;
 }

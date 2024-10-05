@@ -7,10 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardMembershipDTO {
-    private String id;
-    private String idMember;
-    private String memberType;
-    private Boolean unconfirmed;
-    private Boolean deactivated;
+public class LabelsDTO{
+    public PerBoardDTO perBoard;
 }
