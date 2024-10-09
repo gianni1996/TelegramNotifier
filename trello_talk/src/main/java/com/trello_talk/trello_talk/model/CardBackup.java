@@ -10,8 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "card")
-public class Card {
+@Table(name = "card_backup")
+public class CardBackup {
 
     @Id
     @Column(name = "id")

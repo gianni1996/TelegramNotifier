@@ -13,20 +13,21 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.trello_talk.trello_talk.config.error.ApiException;
-import com.trello_talk.trello_talk.dto.input.BoardInputDTO;
-import com.trello_talk.trello_talk.dto.output.BoardOutputDTO;
-import com.trello_talk.trello_talk.dto.response.BoardListResponse;
-import com.trello_talk.trello_talk.dto.response.BoardResponse;
-import com.trello_talk.trello_talk.mapper.BoardMapper;
+import com.trello_talk.trello_talk.dto.input.WorkspaceInputDTO;
+import com.trello_talk.trello_talk.dto.output.WorkspaceOutputDTO;
+import com.trello_talk.trello_talk.mapper.WorkspaceMapper;
+
+import com.trello_talk.trello_talk.dto.response.WorkspaceListResponse;
+import com.trello_talk.trello_talk.dto.response.WorkspaceResponse;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
-public class BoardService {
+public class WorkspaceService {
 
     @Autowired
-    private BoardMapper boardMapper;
+    private WorkspaceMapper workspaceMapper;
 
     @Autowired
     private HttpClient httpClient;
@@ -34,30 +35,30 @@ public class BoardService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    public BoardListResponse getAllBoards(String token, String apiKey) {
-        log.info("Recupero i boards.");
+    public WorkspaceListResponse getAllWorkspaces(String token, String apiKey) {
+        log.info("Recupero i workspace.");
         try {
-            List<BoardInputDTO> boards = getBoards(token, apiKey);
+            List<WorkspaceInputDTO> workspaces = getWorkspaces(token, apiKey);
 
-            if (boards == null || boards.isEmpty()) {
-                log.error("Nessun board trovato.");
-                return new BoardListResponse(List.of());
+            if (workspaces == null || workspaces.isEmpty()) {
+                log.error("Nessun workspace trovato.");
+                return new WorkspaceListResponse(List.of());
             }
 
-            List<BoardOutputDTO> boardOutputDTOs = boards.stream()
-                    .map(boardMapper::toOutputDto)
+            List<WorkspaceOutputDTO> workspaceOutputDTOs = workspaces.stream()
+                    .map(workspaceMapper::toOutputDto)
                     .collect(Collectors.toList());
 
-            return new BoardListResponse(boardOutputDTOs);
+            return new WorkspaceListResponse(workspaceOutputDTOs);
 
         } catch (Exception e) {
-            log.error("Errore nel recupero dei boards", e);
-            throw new ApiException("Errore nel recupero dei boards", e);
+            log.error("Errore nel recupero dei workspace", e);
+            throw new ApiException("Errore nel recupero dei workspace", e);
         }
     }
 
-    protected List<BoardInputDTO> getBoards(String token, String apiKey) {
-        String url = String.format("https://api.trello.com/1/members/me/boards?key=%s&token=%s", apiKey, token);
+    protected List<WorkspaceInputDTO> getWorkspaces(String token, String apiKey) {
+        String url = String.format("https://api.trello.com/1/members/me/organizations?key=%s&token=%s", apiKey, token);
         log.info("Invio richiesta GET a: {}", url);
 
         HttpRequest request = HttpRequest.newBuilder()
@@ -78,7 +79,7 @@ public class BoardService {
             }
 
             return objectMapper.readValue(response.body(),
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, BoardInputDTO.class));
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, WorkspaceInputDTO.class));
 
         } catch (Exception e) {
             log.error("Errore durante la comunicazione con Trello", e);
@@ -86,14 +87,14 @@ public class BoardService {
         }
     }
 
-    public BoardResponse createBoard(String name, String idWorkspace, String token, String apiKey) {
-        String url = String.format("https://api.trello.com/1/boards/?name=%s&idOrganization=%s&key=%s&token=%s",
-                name, idWorkspace, apiKey, token);
-        log.info("Creazione di un nuovo board con nome: {} per il workspace: {}", name, idWorkspace);
+    public WorkspaceResponse createWorkspace(String name, String token, String apiKey) {
+        String url = String.format("https://api.trello.com/1/organizations?displayName=%s&key=%s&token=%s", name,
+                apiKey, token);
+        log.info("Creazione di un nuovo workspace con nome: {}", name);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
-                .POST(HttpRequest.BodyPublishers.noBody())
+                .POST(HttpRequest.BodyPublishers.noBody()) 
                 .header("Accept", "application/json")
                 .build();
 
@@ -108,19 +109,20 @@ public class BoardService {
                 throw new ApiException("Errore nella richiesta: " + response.statusCode());
             }
 
-            BoardOutputDTO boardOutputDTO = objectMapper.readValue(response.body(), BoardOutputDTO.class);
-
-            return new BoardResponse(boardOutputDTO);
+            WorkspaceOutputDTO workspaceOutputDTO = objectMapper.readValue(response.body(), WorkspaceOutputDTO.class);
+ 
+            return new WorkspaceResponse(workspaceOutputDTO);
 
         } catch (Exception e) {
-            log.error("Errore durante la creazione del board con nome: " + name, e);
-            throw new ApiException("Errore durante la creazione del board con nome: " + name, e);
+            log.error("Errore durante la creazione del workspace con nome: " + name, e);
+            throw new ApiException("Errore durante la creazione del workspace con nome: " + name, e);
         }
     }
 
-    public void deleteBoard(String boardId, String apiKey, String token) {
-        String url = String.format("https://api.trello.com/1/boards/%s?key=%s&token=%s", boardId, apiKey, token);
-        log.info("Invio richiesta DELETE per il boardId: {}", boardId);
+    public void deleteWorkspace(String workspaceId, String apiKey, String token) {
+        String url = String.format("https://api.trello.com/1/organizations/%s?key=%s&token=%s", workspaceId, apiKey,
+                token);
+        log.info("Invio richiesta DELETE per il workspaceId: {}", workspaceId);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
@@ -135,14 +137,14 @@ public class BoardService {
             log.info("Risposta ricevuta con stato: {}", response.statusCode());
 
             if (response.statusCode() != 200) {
-                throw new ApiException("Errore nella richiesta DELETE per il board: " + response.statusCode());
+                throw new ApiException("Errore nella richiesta DELETE per il workspace: " + response.statusCode());
             }
 
-            log.info("Board con ID: {} eliminato con successo.", boardId);
+            log.info("Workspace con ID: {} eliminato con successo.", workspaceId);
 
         } catch (Exception e) {
-            log.error("Errore durante l'eliminazione del board con ID: " + boardId, e);
-            throw new ApiException("Errore durante l'eliminazione del board con ID: " + boardId, e);
+            log.error("Errore durante l'eliminazione del workspace con ID: " + workspaceId, e);
+            throw new ApiException("Errore durante l'eliminazione del workspace con ID: " + workspaceId, e);
         }
     }
 }

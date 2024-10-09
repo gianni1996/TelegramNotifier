@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class OpenPerListDTO{
     public String status;
-    public int disableAt;
-    public int warnAt;
+    public Integer disableAt;
+    public Integer warnAt;
 }

@@ -14,8 +14,8 @@ public class CardInputDTO {
     private String idList;
     private String idBoard;
     private String due;
-    private boolean closed;
-    private int pos;
+    private Boolean closed;
+    private Integer pos;
     private String labels;
     private String url;
     private String[] attachments;

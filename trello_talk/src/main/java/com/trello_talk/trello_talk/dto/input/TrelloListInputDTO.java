@@ -7,15 +7,15 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ListInputDTO {
+public class TrelloListInputDTO {
     private String id;             
     private String name;           
-    private boolean closed;        
+    private Boolean closed;        
     private String idBoard;        
-    private int pos;               
-    private boolean subscribed;    
+    private Integer pos;               
+    private Boolean subscribed;    
     private String color;          
     private String softLimit;      
     private String type;           
-    private Object datasource;     
+    private DatasourceDTO datasource;     
 }

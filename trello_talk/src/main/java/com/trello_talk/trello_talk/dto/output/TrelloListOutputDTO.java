@@ -1,4 +1,4 @@
-package com.trello_talk.trello_talk.dto.request;
+package com.trello_talk.trello_talk.dto.output;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BoardIdRequestDTO {
-    private String boardId;
+public class TrelloListOutputDTO {
+    private String id;
+    private String name;
 }

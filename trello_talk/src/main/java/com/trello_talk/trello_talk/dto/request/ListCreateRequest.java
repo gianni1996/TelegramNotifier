@@ -1,4 +1,4 @@
-package com.trello_talk.trello_talk.dto.input;
+package com.trello_talk.trello_talk.dto.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SwitcherViewDTO{
-    public String viewType;
-    public Boolean enabled;
+public class ListCreateRequest {
+    private String name;
 }

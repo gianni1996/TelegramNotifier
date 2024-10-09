@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class TotalAccessRequestsPerBoardDTO{
     public String status;
-    public int disableAt;
-    public int warnAt;
+    public Integer disableAt;
+    public Integer warnAt;
 }

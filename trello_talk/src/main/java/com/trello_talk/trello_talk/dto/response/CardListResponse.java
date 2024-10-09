@@ -2,6 +2,8 @@ package com.trello_talk.trello_talk.dto.response;
 
 import java.util.List;
 
+import com.trello_talk.trello_talk.dto.output.CardOutputDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,6 +11,6 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ListWithCardsDTO {
-    List<ListWithCardsDTO> trelloListWithCards;
+public class CardListResponse {
+    private List<CardOutputDTO> cards;
 }

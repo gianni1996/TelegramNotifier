@@ -11,6 +11,6 @@ public class MembershipDTO{
     public String id;
     public String idMember;
     public String memberType;
-    public boolean unconfirmed;
-    public boolean deactivated;
+    public Boolean unconfirmed;
+    public Boolean deactivated;
 }

@@ -9,6 +9,6 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ListWithCardsDTO {
-    private ListOutputDTO trelloList;
+    private TrelloListOutputDTO trelloList;
     private List<CardOutputDTO> cards;
 }

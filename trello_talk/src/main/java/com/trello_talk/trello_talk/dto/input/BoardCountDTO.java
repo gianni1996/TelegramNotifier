@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UniquePerActionDTO{
-    public String status;
-    public Integer disableAt;
-    public Integer warnAt;
+public class BoardCountDTO {
+    private String idMember;
+    private Integer boardCount;
 }
