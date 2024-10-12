@@ -57,11 +57,11 @@ public class CardService {
     }
 
     protected List<CardInputDTO> getCardsFromList(String listId, String token, String apiKey) {
-        String url = String.format("https://api.trello.com/1/lists/%s/cards?fields=id,name,desc&key=%s&token=%s",
-                listId, apiKey, token);
-        log.info("Invio richiesta GET a: {}", url);
-
         try {
+            String url = String.format("https://api.trello.com/1/lists/%s/cards?fields=id,name,desc&key=%s&token=%s",
+                    listId, apiKey, token);
+            log.info("Invio richiesta GET a: {}", url);
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .GET()
@@ -122,10 +122,10 @@ public class CardService {
     }
 
     public void deleteCard(String cardId, String apiKey, String token) {
-        String url = String.format("https://api.trello.com/1/cards/%s?key=%s&token=%s", cardId, apiKey, token);
-        log.info("Invio richiesta DELETE per eliminare la carta con ID: {}", cardId);
-
         try {
+            String url = String.format("https://api.trello.com/1/cards/%s?key=%s&token=%s", cardId, apiKey, token);
+            log.info("Invio richiesta DELETE per eliminare la carta con ID: {}", cardId);
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .DELETE()

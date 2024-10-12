@@ -42,6 +42,13 @@ public interface BoardMapper {
     @Mapping(target ="description", source="desc")
     Board toModel(BoardInputDTO inputDTO);
     
+    @Mapping(target = "idWorkspace", ignore = true)
+    Board toModel(BoardOutputDTO boardOutputDTO);
+    
+    @Mapping(target = "idWorkspace", ignore = true)
+    @Mapping(target ="description", source="desc")
     BoardOutputDTO toOutputDto(BoardInputDTO board);
+
+    @Mapping(target ="idWorkspaceBackup", source="idWorkspace")
     BoardBackup toBackup(Board board);
 }

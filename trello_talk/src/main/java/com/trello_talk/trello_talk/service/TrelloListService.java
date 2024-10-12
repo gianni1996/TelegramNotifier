@@ -1,6 +1,7 @@
 package com.trello_talk.trello_talk.service;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -50,6 +51,7 @@ public class TrelloListService {
 
     public TrelloListListResponse getLists(String boardId, String token, String apiKey) {
         log.info("Recupero le liste per il boardId: {}", boardId);
+
         try {
             List<TrelloListInputDTO> lists = getListsFromBoard(boardId, token, apiKey);
 
@@ -71,11 +73,13 @@ public class TrelloListService {
     }
 
     public TrelloListResponse createList(String boardId, String name, String token, String apiKey) {
-        String url = String.format("https://api.trello.com/1/lists?name=%s&idBoard=%s&key=%s&token=%s", name, boardId,
-                apiKey, token);
-        log.info("Invio richiesta POST per creare una nuova lista per il boardId: {}", boardId);
-
         try {
+            String encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8.toString());
+            String url = String.format("https://api.trello.com/1/lists?name=%s&idBoard=%s&key=%s&token=%s", encodedName,
+                    boardId,
+                    apiKey, token);
+            log.info("Invio richiesta POST per creare una nuova lista per il boardId: {}", boardId);
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .POST(HttpRequest.BodyPublishers.noBody())
@@ -92,7 +96,8 @@ public class TrelloListService {
                 throw new ApiException("Errore nella creazione della lista: " + response.statusCode());
             }
 
-            TrelloListOutputDTO trelloListOutputDTO = objectMapper.readValue(response.body(), TrelloListOutputDTO.class);
+            TrelloListOutputDTO trelloListOutputDTO = objectMapper.readValue(response.body(),
+                    TrelloListOutputDTO.class);
 
             return new TrelloListResponse(trelloListOutputDTO);
 
@@ -138,10 +143,12 @@ public class TrelloListService {
     }
 
     protected List<TrelloListInputDTO> getListsFromBoard(String boardId, String token, String apiKey) {
-        String url = String.format("https://api.trello.com/1/boards/%s/lists?key=%s&token=%s", boardId, apiKey, token);
-        log.info("Invio richiesta GET a: {}", url);
 
         try {
+            String url = String.format("https://api.trello.com/1/boards/%s/lists?key=%s&token=%s", boardId, apiKey,
+                    token);
+            log.info("Invio richiesta GET a: {}", url);
+
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .GET()

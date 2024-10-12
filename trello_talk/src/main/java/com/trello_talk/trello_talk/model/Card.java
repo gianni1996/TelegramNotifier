@@ -1,7 +1,7 @@
 package com.trello_talk.trello_talk.model;
 
 import java.util.Calendar;
-import javax.persistence.*;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "card")
+@Table(name = "card", schema = "public")
 public class Card {
 
     @Id

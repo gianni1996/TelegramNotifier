@@ -15,49 +15,63 @@ import com.trello_talk.trello_talk.dto.request.BoardCreateRequest;
 import com.trello_talk.trello_talk.dto.response.BoardListResponse;
 import com.trello_talk.trello_talk.dto.response.BoardResponse;
 import com.trello_talk.trello_talk.service.BoardService;
+import com.trello_talk.trello_talk.util.Constants;
+import com.trello_talk.trello_talk.util.IpTracker;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/board")
 @Slf4j
 public class BoardController {
 
-    @Autowired
-    private BoardService boardService;
+        @Autowired
+        private BoardService boardService;
+        @Autowired
+        private IpTracker ipTracker;
 
-    @GetMapping("/getall")
-    public ResponseEntity<BoardListResponse> getAllBoards(
-            @RequestHeader("Token") String token,
-            @RequestHeader("ApiKey") String apiKey) {
+        @GetMapping("/getall")
+        public Mono<ResponseEntity<BoardListResponse>> getAllBoards(
+                        @RequestHeader(Constants.HEADER_TOKEN) String token,
+                        @RequestHeader(Constants.HEADER_API_KEY) String apiKey,
+                        HttpServletRequest request) {
 
-        BoardListResponse boards = boardService.getAllBoards(token, apiKey);
-        return ResponseEntity.ok(boards);
-    }
+                String clientIp = ipTracker.getClientIp(request);
+                log.info(Constants.BOARD_GET_REQUEST_MESSAGE, clientIp);
 
-    @PostMapping("/workspace/{workspaceId}/create")
-    public ResponseEntity<BoardResponse> createBoard(
-            @PathVariable("workspaceId") String workspaceId,
-            @RequestBody BoardCreateRequest createBoardRequestDTO,
-            @RequestHeader("Token") String token,
-            @RequestHeader("ApiKey") String apiKey) {
+                return boardService.getAllBoards(token, apiKey, clientIp)
+                                .map(ResponseEntity::ok);
+        }
 
-        String name = createBoardRequestDTO.getName();
-        log.info("Richiesta per creare un nuovo board con nome: {}", name);
-        BoardResponse board = boardService.createBoard(name, workspaceId, token, apiKey);
+        @PostMapping("/workspace/{workspaceId}/create")
+        public Mono<ResponseEntity<BoardResponse>> createBoard(
+                        @PathVariable(Constants.WORKSPACE_ID) String workspaceId,
+                        @RequestBody BoardCreateRequest createBoardRequestDTO,
+                        @RequestHeader(Constants.HEADER_TOKEN) String token,
+                        @RequestHeader(Constants.HEADER_API_KEY) String apiKey,
+                        HttpServletRequest request) {
 
-        return ResponseEntity.ok(board);
-    }
+                String name = createBoardRequestDTO.getName();
+                String clientIp = ipTracker.getClientIp(request);
+                log.info(Constants.BOARD_CREATE_REQUEST_MESSAGE, name, clientIp);
 
-    @DeleteMapping("/delete/{boardId}")
-    public ResponseEntity<Void> deleteBoard(
-            @PathVariable("boardId") String boardId,
-            @RequestHeader("Token") String token,
-            @RequestHeader("ApiKey") String apiKey) {
+                return boardService.createBoard(name, workspaceId, token, apiKey, clientIp)
+                                .map(ResponseEntity::ok);
+        }
 
-        log.info("Richiesta per eliminare il board con ID: {}", boardId);
-        boardService.deleteBoard(boardId, apiKey, token);
+        @DeleteMapping("/delete/{boardId}")
+        public Mono<ResponseEntity<Void>> deleteBoard(
+                        @PathVariable(Constants.BOARD_ID) String boardId,
+                        @RequestHeader(Constants.HEADER_TOKEN) String token,
+                        @RequestHeader(Constants.HEADER_API_KEY) String apiKey,
+                        HttpServletRequest request) {
 
-        return ResponseEntity.noContent().build();
-    }
+                String clientIp = ipTracker.getClientIp(request);
+                log.info(Constants.BOARD_DELETE_REQUEST_MESSAGE, boardId, clientIp);
+
+                return boardService.deleteBoard(boardId, apiKey, token, clientIp)
+                                .map(v -> ResponseEntity.noContent().build());
+        }
 }

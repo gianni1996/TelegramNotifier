@@ -2,10 +2,10 @@ package com.trello_talk.trello_talk.model;
 
 import java.util.Calendar;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "board_backup")
+@Table(name = "board_backup", schema = "public")
 public class BoardBackup {
 
     @Id
@@ -49,6 +49,6 @@ public class BoardBackup {
     @Column(name = "id_member_creator")
     private String idMemberCreator;
 
-    @Column(name= "id_workspace")
-    private String idWorkspace;
+    @Column(name= "id_workspace_backup")
+    private String idWorkspaceBackup;
 }

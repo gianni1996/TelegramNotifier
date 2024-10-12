@@ -1,9 +1,9 @@
 package com.trello_talk.trello_talk.model;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "list_backup")
+@Table(name = "list_backup", schema = "public")
 public class TrelloListBackup {
 
     @Id
@@ -26,8 +26,8 @@ public class TrelloListBackup {
     @Column(name = "closed")
     private Boolean closed;
 
-    @Column(name = "id_board")
-    private String idBoard;
+    @Column(name = "id_board_backup")
+    private String idBoardBackup;
 
     @Column(name = "position")
     private Integer position;

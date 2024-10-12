@@ -21,5 +21,7 @@ public interface TrelloListMapper {
     TrelloListInputDTO toInputDto(TrelloList list);
 
     TrelloListOutputDTO toOutputDto(TrelloListInputDTO list);
+
+    @Mapping(target ="idBoardBackup", source="idBoard")
     TrelloListBackup toBackup(TrelloList list);
 }

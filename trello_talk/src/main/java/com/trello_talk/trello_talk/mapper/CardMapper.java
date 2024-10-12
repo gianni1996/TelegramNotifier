@@ -23,5 +23,7 @@ public interface CardMapper {
     Card toModel(CardInputDTO inputDTO);
     
     CardOutputDTO toOutputDto(CardInputDTO card);
+
+    @Mapping(target ="idListBackup", source="idList")
     CardBackup toBackup(Card card);
 }
