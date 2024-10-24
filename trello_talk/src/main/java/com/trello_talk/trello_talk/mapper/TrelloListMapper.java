@@ -16,11 +16,16 @@ public interface TrelloListMapper {
     @Mapping(target ="position", source="pos")
     TrelloList toModel(TrelloListInputDTO inputDTO);
 
+    TrelloList toModel(TrelloListOutputDTO outputDTO);
+
     @Mapping(target ="pos", source="position")
     @Mapping(target = "datasource", ignore = true)
     TrelloListInputDTO toInputDto(TrelloList list);
 
+    @Mapping(target ="position", source="pos")
     TrelloListOutputDTO toOutputDto(TrelloListInputDTO list);
+
+    TrelloListOutputDTO toOutputDto(TrelloList list);
 
     @Mapping(target ="idBoardBackup", source="idBoard")
     TrelloListBackup toBackup(TrelloList list);

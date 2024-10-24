@@ -34,9 +34,6 @@ public class Board {
     @Column(name = "closed")
     private Boolean closed;
 
-    @Column(name = "id_organization")
-    private String idOrganization;
-
     @Column(name = "url")
     private String url;
 

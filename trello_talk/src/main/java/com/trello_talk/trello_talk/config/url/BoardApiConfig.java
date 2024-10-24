@@ -1,4 +1,4 @@
-package com.trello_talk.trello_talk.config;
+package com.trello_talk.trello_talk.config.url;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -11,11 +11,13 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TrelloBoardApiConfig {
+public class BoardApiConfig {
     @Value("${api.trello.board.get}")
     private String getBoardsUrl;
     @Value("${api.trello.board.create}")
     private String createBoardUrl;
     @Value("${api.trello.board.delete}")
     private String deleteBoardUrl;
+    @Value("${api.trello.board.update}")
+    private String updateBoardUrl;
 }

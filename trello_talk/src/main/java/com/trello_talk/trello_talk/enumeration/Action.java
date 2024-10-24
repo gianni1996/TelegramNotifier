@@ -8,7 +8,9 @@ import lombok.Getter;
 public enum Action {
     CREATE("Create"),
     GET("Get"),
-    DELETE("Delete");
+    DELETE("Delete"),
+    UPDATE("Update"),
+    BACKUP("Backup");
 
     private final String name;
 }

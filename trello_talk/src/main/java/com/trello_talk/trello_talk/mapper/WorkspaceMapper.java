@@ -7,6 +7,7 @@ import org.mapstruct.factory.Mappers;
 import com.trello_talk.trello_talk.dto.input.WorkspaceInputDTO;
 import com.trello_talk.trello_talk.dto.output.WorkspaceOutputDTO;
 import com.trello_talk.trello_talk.model.Workspace;
+import com.trello_talk.trello_talk.model.WorkspaceBackup;
 
 @Mapper(componentModel = "spring")
 public interface WorkspaceMapper {
@@ -48,16 +49,19 @@ public interface WorkspaceMapper {
     @Mapping(target = "teamType", ignore = true)
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "url", ignore = true)
-     @Mapping(target = "website", ignore = true)
+    @Mapping(target = "website", ignore = true)
     @Mapping(target = "desc", source = "description")
     WorkspaceInputDTO toInputDto(WorkspaceOutputDTO workspaceOutputDTO);
 
     @Mapping(target = "description", source = "desc")
     Workspace toModel(WorkspaceInputDTO workspaceInputDTO);
 
+    WorkspaceBackup toBackup(Workspace workspace);
+
     @Mapping(target = "description", source = "desc")
     WorkspaceOutputDTO toOutputDto(WorkspaceInputDTO workspaceInputDTO);
-
+    
+    Workspace toModel(WorkspaceOutputDTO workspaceOutputDTO);
     WorkspaceOutputDTO toOutputDto(Workspace workspace); 
 
 }

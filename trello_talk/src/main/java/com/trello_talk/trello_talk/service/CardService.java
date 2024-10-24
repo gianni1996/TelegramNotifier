@@ -1,26 +1,39 @@
 package com.trello_talk.trello_talk.service;
 
-import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.trello_talk.trello_talk.config.error.ApiException;
+import com.trello_talk.trello_talk.config.http.HttpRequestBuilder;
+import com.trello_talk.trello_talk.config.url.CardApiConfig;
 import com.trello_talk.trello_talk.dto.input.CardInputDTO;
 import com.trello_talk.trello_talk.dto.output.CardOutputDTO;
 import com.trello_talk.trello_talk.dto.response.CardListResponse;
 import com.trello_talk.trello_talk.dto.response.CardResponse;
+import com.trello_talk.trello_talk.enumeration.Action;
+import com.trello_talk.trello_talk.enumeration.WorkItem;
 import com.trello_talk.trello_talk.mapper.CardMapper;
+import com.trello_talk.trello_talk.model.Card;
+import com.trello_talk.trello_talk.model.CardBackup;
+import com.trello_talk.trello_talk.repository.CardBackupRepository;
+import com.trello_talk.trello_talk.repository.CardRepository;
+import com.trello_talk.trello_talk.util.Constants;
+import com.trello_talk.trello_talk.util.HttpResponseLogger;
 
 import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 @Service
 @Slf4j
@@ -28,124 +41,215 @@ public class CardService {
 
     @Autowired
     private CardMapper trelloCardMapper;
-
     @Autowired
     private HttpClient httpClient;
-
     @Autowired
     private ObjectMapper objectMapper;
+    @Autowired
+    private CardRepository cardRepository;
+    @Autowired
+    private CardBackupRepository cardBackupRepository;
+    @Autowired
+    private OperationService operationService;
+    @Autowired
+    private CardApiConfig cardApiConfig;
+    @Autowired
+    private HttpRequestBuilder httpRequestBuilder;
 
-    public CardListResponse getCards(String listId, String token, String apiKey) {
-        log.info("Recupero le carte per la listaId: {}", listId);
-        try {
-            List<CardInputDTO> cards = getCardsFromList(listId, token, apiKey);
+    public Mono<CardListResponse> getCards(String listId, String token, String apiKey, String clientIp) {
+        log.info(Constants.CARD_GET_MESSAGE, listId);
 
-            if (cards == null || cards.isEmpty()) {
-                return new CardListResponse(List.of());
-            }
+        return getCardsFromList(listId, token, apiKey, clientIp)
+                .flatMap(cards -> {
+                    if (cards == null || cards.isEmpty()) {
+                        return Mono.just(new CardListResponse(List.of()));
+                    }
 
-            List<CardOutputDTO> cardOutputDTOs = cards.stream()
-                    .map(trelloCardMapper::toOutputDto)
-                    .collect(Collectors.toList());
-
-            return new CardListResponse(cardOutputDTOs);
-
-        } catch (Exception e) {
-            log.error("Errore nel recupero delle card per la listaId: " + listId, e);
-            throw new ApiException("Impossibile recuperare le carte per la lista ID: " + listId, e);
-        }
+                    return Flux.fromIterable(cards)
+                            .parallel() // Parallelizza l'elaborazione delle card
+                            .runOn(Schedulers.parallel()) // Esegui in thread separati
+                            .flatMap(card -> Mono.just(trelloCardMapper.toOutputDto(card))
+                                    .timeout(Duration.ofSeconds(5)) // Timeout di 5 secondi per prevenire ritardi
+                                    .onErrorResume(TimeoutException.class, e -> {
+                                        log.error(Constants.CARD_ERROR_TIMEOUT +
+                                                listId);
+                                        return Mono.empty(); // Ritorna Mono vuoto in caso di timeout
+                                    }))
+                            .sequential() // Torna a una sequenza ordinata
+                            .collectList() // Colleziona i risultati in una lista
+                            .flatMap(cardOutputDTOs -> {
+                                if (cardOutputDTOs.isEmpty()) {
+                                    log.error(Constants.CARDS_NOT_FOUND_FOR_LIST + listId);
+                                }
+                                operationService.saveOperation(WorkItem.CARD.getName(), Action.GET.getName(),
+                                        Boolean.TRUE, null,
+                                        clientIp);
+                                return Mono.just(new CardListResponse(cardOutputDTOs));
+                            });
+                })
+                .onErrorResume(e -> operationService.handleOperationError(e, WorkItem.CARD.getName(),
+                        Action.GET.getName(), clientIp, Constants.CARD_GET_ERROR_MESSAGE));
     }
 
-    protected List<CardInputDTO> getCardsFromList(String listId, String token, String apiKey) {
+    protected Mono<List<CardInputDTO>> getCardsFromList(String listId, String token, String apiKey, String clientIp) {
         try {
-            String url = String.format("https://api.trello.com/1/lists/%s/cards?fields=id,name,desc&key=%s&token=%s",
-                    listId, apiKey, token);
-            log.info("Invio richiesta GET a: {}", url);
+            String url = String.format(cardApiConfig.getGetCardsUrl(), listId, apiKey, token);
+            log.info(Constants.GET_URL_MESSAGE + url);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
-                    .header("Accept", "application/json")
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request,
+            HttpResponse<String> response = httpClient.send(httpRequestBuilder.buildGetRequest(url),
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            int statusCode = response.statusCode();
+            HttpResponseLogger.logResponse(response, statusCode);
+            log.info(Constants.RESPONSE_RECEIVED_STATUS + statusCode);
 
-            log.info("Risposta ricevuta con stato: {}", response.statusCode());
-            log.info("Corpo della risposta: {}", response.body());
-
-            if (response.statusCode() != 200) {
-                throw new ApiException("Errore nella richiesta: " + response.statusCode());
+            if (statusCode != 200) {
+                return operationService.handleErrorStatus(WorkItem.CARD.getName(), Action.GET.getName(), clientIp,
+                        Constants.ERROR_REQUEST_MESSAGE + statusCode);
             }
 
-            return objectMapper.readValue(response.body(),
+            List<CardInputDTO> cardInputDTOs = objectMapper.readValue(response.body(),
                     objectMapper.getTypeFactory().constructCollectionType(List.class, CardInputDTO.class));
 
+            return Mono.just(cardInputDTOs);
+
         } catch (Exception e) {
-            log.error("Errore durante la comunicazione con Trello", e);
-            throw new ApiException("Errore durante la comunicazione con Trello", e);
+            return operationService.handleOperationError(e, WorkItem.CARD.getName(), Action.CREATE.getName(), clientIp,
+                    Constants.CARD_GET_ERROR_MESSAGE);
         }
     }
 
-    public CardResponse createCard(String listId, String name, String desc, String token, String apiKey) {
+    public Mono<CardResponse> createCard(String listId, String name, String desc, String token, String apiKey,
+            String clientIp) {
         try {
             String encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8.toString());
             String encodedDesc = URLEncoder.encode(desc, StandardCharsets.UTF_8.toString());
-
-            String url = String.format("https://api.trello.com/1/cards?idList=%s&name=%s&desc=%s&key=%s&token=%s",
-                    listId, encodedName, encodedDesc, apiKey, token);
-
-            log.info("Invio richiesta POST per creare una carta con nome: {} e descrizione: {}", name, desc);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .POST(HttpRequest.BodyPublishers.noBody())
-                    .header("Accept", "application/json")
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request,
+            String url = String.format(cardApiConfig.getCreateCardUrl(), listId, encodedName, encodedDesc, apiKey,
+                    token);
+            log.info(Constants.CARD_CREATE_MESSAGE, name, desc);
+            HttpResponse<String> response = httpClient.send(httpRequestBuilder.buildPostRequest(url),
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            int statusCode = response.statusCode();
+            HttpResponseLogger.logResponse(response, statusCode);
 
-            log.info("Risposta ricevuta con stato: {}", response.statusCode());
-            log.info("Corpo della risposta: {}", response.body());
-
-            if (response.statusCode() != 200) {
-                throw new ApiException("Errore durante la creazione della carta: " + response.statusCode());
+            if (statusCode != 200) {
+                return operationService.handleErrorStatus(WorkItem.CARD.getName(), Action.CREATE.getName(), clientIp,
+                        Constants.ERROR_REQUEST_MESSAGE + statusCode);
             }
 
             CardOutputDTO cardOutputDTO = objectMapper.readValue(response.body(), CardOutputDTO.class);
-            return new CardResponse(cardOutputDTO);
+            cardRepository.save(trelloCardMapper.toModel(cardOutputDTO));
+            operationService.saveOperation(WorkItem.CARD.getName(), Action.GET.getName(), Boolean.TRUE, null, clientIp);
+            return Mono.just(new CardResponse(cardOutputDTO));
+
         } catch (Exception e) {
-            log.error("Errore durante la creazione della carta", e);
-            throw new ApiException("Errore durante la creazione della carta", e);
+            return operationService.handleOperationError(e, WorkItem.CARD.getName(), Action.CREATE.getName(), clientIp,
+                    Constants.CARD_CREATE_ERROR_MESSAGE);
         }
     }
 
-    public void deleteCard(String cardId, String apiKey, String token) {
+    public Mono<Void> deleteCard(String cardId, String apiKey, String token, String clientIp) {
         try {
-            String url = String.format("https://api.trello.com/1/cards/%s?key=%s&token=%s", cardId, apiKey, token);
-            log.info("Invio richiesta DELETE per eliminare la carta con ID: {}", cardId);
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .DELETE()
-                    .header("Accept", "application/json")
-                    .build();
-
-            HttpResponse<String> response = httpClient.send(request,
+            String url = String.format(cardApiConfig.getDeleteCardUrl(), cardId, apiKey, token);
+            log.info(Constants.CARD_DELETE_MESSAGE, cardId);
+            HttpResponse<String> response = httpClient.send(httpRequestBuilder.buildDeleteRequest(url),
                     HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-
-            log.info("Risposta ricevuta con stato: {}", response.statusCode());
-
-            if (response.statusCode() != 200) {
-                throw new ApiException("Errore nella richiesta DELETE per la carta: " + response.statusCode());
-            }
-
-            log.info("Carta con ID: {} eliminata con successo.", cardId);
+            int statusCode = response.statusCode();
+            HttpResponseLogger.logResponse(response, statusCode);
+            backupBoardDeletedById(cardId, statusCode, clientIp);
+            return Mono.empty();
 
         } catch (Exception e) {
-            log.error("Errore durante l'eliminazione della carta con ID: " + cardId, e);
-            throw new ApiException("Errore durante l'eliminazione della carta con ID: " + cardId, e);
+            return operationService.handleOperationError(e, WorkItem.CARD.getName(), Action.DELETE.getName(), clientIp,
+                    Constants.CARD_DELETE_ERROR_MESSAGE + cardId);
+        }
+    }
+
+    private void backupBoardDeletedById(String cardId, int statusCode, String clientIp) {
+        Optional<Card> cardOptional = cardRepository.findById(cardId);
+
+        if (statusCode != 200) {
+            operationService.handleErrorStatusNoMono(WorkItem.CARD.getName(), Action.DELETE.getName(), clientIp,
+                    Constants.ERROR_REQUEST_MESSAGE + statusCode);
+        }
+
+        if (cardOptional.isPresent()) {
+            Card cardForBackup = cardOptional.get();
+            cardBackupRepository.save(trelloCardMapper.toBackup(cardForBackup));
+            operationService.saveOperation(WorkItem.CARD.getName(), Action.DELETE.getName(), Boolean.TRUE, null,
+                    clientIp);
+            cardRepository.deleteById(cardId);
+            log.info(Constants.CARD_DELETED_SUCCESSFULLY, cardId);
+        } else {
+            operationService.saveOperation(WorkItem.CARD.getName(), Action.DELETE.getName(), Boolean.TRUE,
+                    Constants.CARD_DELETE_MESSAGE_NO_BACKUP, clientIp);
+        }
+    }
+
+    public Mono<CardResponse> updateCard(String cardId, String name, String desc, String token, String apiKey,
+            String clientIp) {
+        try {
+            String encodedName = URLEncoder.encode(name, StandardCharsets.UTF_8.toString());
+            String encodedDesc = URLEncoder.encode(desc, StandardCharsets.UTF_8.toString());
+            String url = String.format(cardApiConfig.getUpdateCardUrl(), cardId, encodedName, encodedDesc, apiKey,
+                    token);
+
+            log.info(Constants.CARD_UPDATE_MESSAGE, name, desc);
+            HttpResponse<String> response = httpClient.send(httpRequestBuilder.buildPutRequest(url),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            int statusCode = response.statusCode();
+            HttpResponseLogger.logResponse(response, statusCode);
+            Card card = objectMapper.readValue(response.body(), Card.class);
+            backupCardUpdatedById(card, statusCode, clientIp);
+            CardOutputDTO cardOutputDTO = trelloCardMapper.toOutputDto(card);
+            operationService.saveOperation(WorkItem.CARD.getName(), Action.UPDATE.getName(), Boolean.TRUE, null,
+                    clientIp);
+            return Mono.just(new CardResponse(cardOutputDTO));
+
+        } catch (Exception e) {
+            return operationService.handleOperationError(e, WorkItem.CARD.getName(), Action.UPDATE.getName(), clientIp,
+                    Constants.CARD_UPDATE_ERROR_MESSAGE);
+        }
+    }
+
+    private void backupCardUpdatedById(Card card, int statusCode, String clientIp) {
+        String cardId = card.getId();
+        Optional<Card> cardOptional = cardRepository.findById(cardId);
+
+        if (statusCode != 200) {
+            operationService.handleErrorStatusNoMono(WorkItem.CARD.getName(), Action.UPDATE.getName(), clientIp,
+                    Constants.ERROR_REQUEST_MESSAGE + statusCode);
+        }
+
+        if (cardOptional.isPresent()) {
+            Card cardForBackup = cardOptional.get();
+            cardBackupRepository.save(trelloCardMapper.toBackup(cardForBackup));
+            cardRepository.save(card);
+            operationService.saveOperation(WorkItem.CARD.getName(), Action.UPDATE.getName(), Boolean.TRUE, null,
+                    clientIp);
+            log.info(Constants.CARD_UPDATED_SUCCESSFULLY, cardId);
+        } else {
+            cardRepository.save(card);
+            operationService.saveOperation(WorkItem.CARD.getName(), Action.UPDATE.getName(), Boolean.TRUE,
+                    Constants.CARD_UPDATE_MESSAGE_NO_BACKUP + cardId, clientIp);
+        }
+    }
+
+    public void backupAllCards(String listId, String clientIp) {
+        try {
+            log.info(Constants.BACKUP_CARDS_START);
+            List<Card> allCards = cardRepository.findByIdList(listId);
+            List<CardBackup> cardBackups = new ArrayList<>();
+
+            for (Card card : allCards) {
+                CardBackup cardBackup = trelloCardMapper.toBackup(card);
+                cardBackups.add(cardBackup);
+            }
+
+            cardBackupRepository.saveAll(cardBackups);
+            log.info(Constants.BACKUP_CARDS_SUCCESS, cardBackups.size());
+        } catch (Exception e) {
+            operationService.saveOperation(WorkItem.CARD.getName(), Action.BACKUP.getName(), Boolean.TRUE,
+                    Constants.BACKUP_CARDS_ERROR, clientIp);
         }
     }
 }

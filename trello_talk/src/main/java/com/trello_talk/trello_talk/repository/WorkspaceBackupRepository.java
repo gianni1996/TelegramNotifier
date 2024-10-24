@@ -6,5 +6,5 @@ import org.springframework.stereotype.Repository;
 import com.trello_talk.trello_talk.model.WorkspaceBackup;
 
 @Repository
-public interface WorkspacBackupRepository extends JpaRepository<WorkspaceBackup, String> {
+public interface WorkspaceBackupRepository extends JpaRepository<WorkspaceBackup, String> {
 }

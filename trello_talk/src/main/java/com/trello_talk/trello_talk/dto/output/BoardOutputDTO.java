@@ -15,10 +15,9 @@ public class BoardOutputDTO {
     private String name;
     private String description;
     private Boolean closed;
-    private String idOrganization;
     private String url;
     private Calendar dateLastActivity;
     private Calendar dateLastView;
     private String idMemberCreator;
-    private String idWorkspace;
+    private String idOrganization;
 }

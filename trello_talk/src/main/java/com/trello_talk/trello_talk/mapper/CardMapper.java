@@ -3,7 +3,6 @@ package com.trello_talk.trello_talk.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
-
 import com.trello_talk.trello_talk.dto.input.CardInputDTO;
 import com.trello_talk.trello_talk.dto.output.CardOutputDTO;
 import com.trello_talk.trello_talk.model.Card;
@@ -21,8 +20,14 @@ public interface CardMapper {
     @Mapping(target ="description", source="desc")
     @Mapping(target ="position", source="pos")
     Card toModel(CardInputDTO inputDTO);
-    
+
+    Card toModel(CardOutputDTO cardOutputDTO);
+
+    @Mapping(target ="description", source="desc")
+    @Mapping(target ="position", source="pos")
     CardOutputDTO toOutputDto(CardInputDTO card);
+
+    CardOutputDTO toOutputDto(Card card);
 
     @Mapping(target ="idListBackup", source="idList")
     CardBackup toBackup(Card card);

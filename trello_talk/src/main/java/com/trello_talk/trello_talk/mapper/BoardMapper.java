@@ -35,20 +35,23 @@ public interface BoardMapper {
     @Mapping(target = "templateGallery", ignore = true)
     @Mapping(target = "type", ignore = true)
     @Mapping(target = "starred", ignore = true)
-    @Mapping(target ="desc", source="description")
+    @Mapping(target = "desc", source = "description")
+    @Mapping(target = "idOrganization", source = "idWorkspace")
     BoardInputDTO toInputDto(Board board);
-    
-    @Mapping(target = "idWorkspace", ignore = true)
-    @Mapping(target ="description", source="desc")
+
+    @Mapping(target = "idWorkspace", source = "idOrganization")
+    @Mapping(target = "description", source = "desc")
     Board toModel(BoardInputDTO inputDTO);
-    
-    @Mapping(target = "idWorkspace", ignore = true)
+
+    @Mapping(target = "idWorkspace", source = "idOrganization")
     Board toModel(BoardOutputDTO boardOutputDTO);
-    
-    @Mapping(target = "idWorkspace", ignore = true)
-    @Mapping(target ="description", source="desc")
+
+    @Mapping(target = "idOrganization", source = "idWorkspace")
+    BoardOutputDTO toOutputDto(Board board);
+
+    @Mapping(target = "description", source = "desc")
     BoardOutputDTO toOutputDto(BoardInputDTO board);
 
-    @Mapping(target ="idWorkspaceBackup", source="idWorkspace")
+    @Mapping(target = "idWorkspaceBackup", source = "idWorkspace")
     BoardBackup toBackup(Board board);
 }
